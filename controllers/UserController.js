@@ -1,3 +1,23 @@
+var model = require('../models');
+
 exports.index = function(req, res) {
-    res.send('NOT IMPLEMENTED: List Users');
+    model.User.findAll({})
+    .then(function(users){
+        res.send(users)
+    })
+    .catch(function(e){
+        res.send(e)
+    })
+};
+
+exports.store = function(req, res) {
+    models.User.create({
+        username: req.body.username
+    })
+    .then(function() {
+        res.redirect('/');
+    })
+    .catch(function(e){
+        res.send(e)
+    });
 };
