@@ -24,7 +24,8 @@ module.exports = {
         type: Sequelize.STRING
       },
       emailToken: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        unique: true,
       },
       smsToken: {
         type: Sequelize.STRING
