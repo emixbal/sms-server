@@ -23,6 +23,16 @@ module.exports = {
       password: {
         type: Sequelize.STRING
       },
+      emailToken: {
+        type: Sequelize.STRING
+      },
+      smsToken: {
+        type: Sequelize.STRING
+      },
+      isActive: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
