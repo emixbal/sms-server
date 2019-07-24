@@ -1,6 +1,8 @@
 require('dotenv').config();
+var validator = require('validator');
 var crypto = require('crypto');
 var jwt = require('jsonwebtoken');
+
 
 var model = require('../models');
 
@@ -33,13 +35,34 @@ exports.login = function(req, res) {
     })
 };
 
-exports.register = function(req, res) {
-    model.User.create(req.body)
+exports.register = async function(req, res) {
+    if(validator.isEmail(req.body.email)==false)
+        return res.status(400).send({'message':'Email kosong atau format salah!'})
+    if(validator.isLength(req.body.password, {min:8, max: 10})==false)
+        return res.status(400).send({'message':'Panjang password min 8 char, max 8 char'})
+
+    await model.User.findOne({ where: {email: req.body.email} })
     .then(function(user){
-        res.send(user)
+        if(user != null)
+            return res.status(200).send({'message':'email anda telah terdaftar'})
     })
     .catch(function(e){
-        console.log(e);
-        res.send({'message':'error'})
+        console.log('error cek email terdaftar',e);
+        res.status(400).send({'message':'error'})
+    })
+
+    	
+    await model.User.create(req.body)
+    .then(function(user){
+        var newUser = {
+            id:user.id,
+            email:user.email,
+            username:user.username,
+        }
+        return res.status(201).send(newUser)
+    })
+    .catch(function(e){
+        console.log('error register new user',e);
+        res.status(400).send({'message':'error'})
     })
 }
