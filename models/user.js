@@ -9,14 +9,20 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     username: DataTypes.STRING,
     email: DataTypes.STRING,
+    emailToken: DataTypes.STRING,
+    smsToken: DataTypes.STRING,
+    isActive: DataTypes.BOOLEAN,
     password: DataTypes.STRING
   }, {
     defaultScope: {
-      attributes: { exclude: ['password'] },
+      attributes: { exclude: ['password', 'emailToken'] },
     },
     scopes: {
       withPassword: {
         attributes: { include: ['password'] },
+      },
+      withEmailToken: {
+        attributes: { include: ['emailToken'] },
       }
     }
   });
