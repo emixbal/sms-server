@@ -19,13 +19,14 @@ exports.login = function(req, res) {
         if(user.password != passwordHash)
             return res.status(401).send({'message':'wrong password'})
 
-        var newUser = {
+        var newData = {
             id:user.id,
             email:user.email,
             username:user.username,
+            isActive:user.isActive
         }
         
-        var token = await jwt.sign(newUser, process.env.SECRET_KEY);
+        var token = await jwt.sign(newData, process.env.SECRET_KEY);
 
         return res.send({
             'token':token
@@ -49,7 +50,7 @@ async function sendEmail(email, token){
         from: 'sender@email.com', // sender address
         to: email, // list of receivers
         subject: 'verify ur email', // Subject line
-        html: token// plain text body
+        html: `<a href="http://localhost:3000/auth/verify?token=${token}" >klik to verify</a>`// plain text body
     };
 
     await transporter.sendMail(mailOptions, function (err, info) {
@@ -90,7 +91,7 @@ exports.register = async function(req, res) {
         emailToken: emailToken,
     })
     .then(async function(user){
-        await sendEmail(user.email, user.token)
+        await sendEmail(user.email, user.emailToken)
 
         var newUser = {
             id: user.id,
@@ -104,10 +105,34 @@ exports.register = async function(req, res) {
     })
     .catch(function(e){
         console.log('error register new user',e);
-        res.status(400).send({'message':e})
+        res.status(400).send({'message':"error"})
     })
 }
 
 exports.verifyEmail = function(req, res) {
-    
+    var token = req.query.token;
+    model.User.scope('withEmailToken').findOne({ where: {emailToken: token} })
+    .then(function(user){
+        if(user==null)
+            return res.status(404).send({'message':'link invalid'})
+
+        model.User.update(
+            {
+                emailToken: null,
+                isActive: true
+            },
+            {where: { id: user.id }}
+        )
+        .then(function(result) {
+            res.status(200).send({"message":"success, user now is verified"})
+        })
+        .catch(function(e){
+            console.log('error update token and isActive',e);
+            res.status(400).send({'message':"error"})
+        })
+    })
+    .catch(function(e){
+        console.log('error verify email',e);
+        res.status(400).send({'message':"error"})
+    })
 }
