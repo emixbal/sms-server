@@ -12,8 +12,14 @@ exports.test = function(req, res) {
 }
 
 exports.login = function(req, res) {
+    if(req.body.email==undefined)
+        return res.status(400).send({'message':'email harus diisi!'})
+    if(req.body.password==undefined)
+        return res.status(400).send({'message':'password harus diisi!'})
+
     var email = req.body.email;
-    var password = req.body.password
+    var password = req.body.password;
+
     model.User.scope('withPassword').findOne({ where: {email: email} })
     .then(async function(user){
         if(user==null)
@@ -60,56 +66,60 @@ async function sendEmail(email, token){
 
     await transporter.sendMail(mailOptions, function (err, info) {
         if(err)
-            console.log(err)
+            console.log("===================> error send email",err)
         else
             console.log(info);
     });
 }
 
 exports.register = async function(req, res) {
-    if(validator.isEmail(req.body.email)==false)
+    if(req.body.name==undefined)
+        return res.status(400).send({'message':'email harus diisi!'})
+    if(req.body.email==undefined || validator.isEmail(req.body.email)==false)
         return res.status(400).send({'message':'Email kosong atau format salah!'})
-
-    if(validator.isLength(req.body.password, {min:8, max: 10})==false)
+    if(req.body.password==undefined || validator.isLength(req.body.password, {min:8, max: 10})==false)
         return res.status(400).send({'message':'Panjang password min 8 char, max 8 char'})
 
-    await model.User.findOne({ where: {email: req.body.email},  })
+    await model.User.findOne({ where: {email: req.body.email}})
     .then(function(user){
         if(user != null)
-            return res.status(200).send({'message':'email anda telah terdaftar'})
+            return res.status(200).send({'message':'email anda telah terdaftar'});
+        // call create user function
+        createUser(userData=req.body);
     })
     .catch(function(e){
-        console.log('error cek email terdaftar',e);
+        console.log('===================> error cek email terdaftar',e);
         res.status(400).send({'message':'error'})
     })
 
-    var salt = crypto.randomBytes(16).toString('hex');
-    var emailToken = await crypto.pbkdf2Sync(req.body.email, salt, 1000, 32, `sha512`).toString(`hex`);
-	
-    await model.User.create({
-        name: req.body.name,
-        username: req.body.username,
-        email: req.body.email,
-        password: req.body.password,
-        emailToken: emailToken,
-    })
-    .then(async function(user){
-        await sendEmail(user.email, user.emailToken)
-
-        var newUser = {
-            id: user.id,
-            email: user.email,
-            username: user.username,
-        }
-        return res.status(201).send({
-            data: newUser,
-            message: 'verify your email!'
+    async function createUser(userData){
+        var salt = crypto.randomBytes(16).toString('hex');
+        var emailToken = await crypto.pbkdf2Sync(req.body.email, salt, 1000, 32, `sha512`).toString(`hex`);
+        
+        await model.User.create({
+            name: userData.name,
+            email: userData.email,
+            password: userData.password,
+            emailToken: emailToken,
         })
-    })
-    .catch(function(e){
-        console.log('error register new user',e);
-        res.status(400).send({'message':"error"})
-    })
+        .then(async function(user){
+            await sendEmail(user.email, user.emailToken)
+    
+            var newUser = {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+            }
+            return res.status(201).send({
+                data: newUser,
+                message: 'verify your email!'
+            })
+        })
+        .catch(function(e){
+            console.log('===================> error register new user',e);
+            res.status(400).send({'message':"error"})
+        })
+    }
 }
 
 exports.verifyEmail = function(req, res) {
@@ -130,12 +140,12 @@ exports.verifyEmail = function(req, res) {
             res.status(200).send({"message":"success, user now is verified"})
         })
         .catch(function(e){
-            console.log('error update token and isActive',e);
+            console.log('===================> error update token and isActive',e);
             res.status(400).send({'message':"error"})
         })
     })
     .catch(function(e){
-        console.log('error verify email',e);
+        console.log('===================> error verify email',e);
         res.status(400).send({'message':"error"})
     })
 }
