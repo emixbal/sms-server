@@ -6,6 +6,7 @@ exports.index = function(req, res) {
         res.send(users)
     })
     .catch(function(e){
-        res.send(e)
+        console.log(e);
+        res.send("e")
     })
 };
