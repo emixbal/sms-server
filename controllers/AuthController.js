@@ -7,6 +7,10 @@ var nodemailer = require('nodemailer');
 
 var model = require('../models');
 
+exports.test = function(req, res) {
+    res.send('ok');
+}
+
 exports.login = function(req, res) {
     var email = req.body.email;
     var password = req.body.password
@@ -33,6 +37,7 @@ exports.login = function(req, res) {
         })
     })
     .catch(function(e){
+        console.log(e);
         return res.status(400).send({'message':'Bad Request!'})
     })
 };
@@ -55,11 +60,9 @@ async function sendEmail(email, token){
 
     await transporter.sendMail(mailOptions, function (err, info) {
         if(err)
-            // console.log(err)
-            return res.send(err)
+            console.log(err)
         else
-            // console.log(info);
-            return res.send(err)
+            console.log(info);
     });
 }
 
