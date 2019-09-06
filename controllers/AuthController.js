@@ -12,6 +12,9 @@ exports.test = function(req, res) {
 }
 
 exports.login = function(req, res) {
+    if((process.env.SECRET_KEY).length<5 && (process.env.PASSWORD_KEY).length<5){
+        return res.status(500).send({'message':'terjadi kesalahan!'})
+    }
     if(req.body.email==undefined)
         return res.status(400).send({'message':'email harus diisi!'})
     if(req.body.password==undefined)
