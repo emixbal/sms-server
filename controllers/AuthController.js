@@ -42,6 +42,7 @@ exports.login = function(req, res) {
         var token = await jwt.sign(newData, process.env.SECRET_KEY);
 
         return res.send({
+            data: newData,
             'token':token
         })
     })
